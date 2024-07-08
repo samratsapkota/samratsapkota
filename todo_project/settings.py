@@ -50,7 +50,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django_prometheus.middleware.PrometheusBeforeMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 ROOT_URLCONF = 'todo_project.urls'
@@ -79,8 +79,12 @@ WSGI_APPLICATION = 'todo_project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'my_database',
+        'USER': 'todo',
+        'PASSWORD': 'todo@123',
+        'HOST': 'localhost',  # or the IP address of your MySQL server
+        'PORT': '3306',
     }
 }
 

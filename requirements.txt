@@ -1,6 +1,8 @@
 asgiref==3.8.1
+asgiref==3.8.1
 Django==5.0.6
 django-prometheus==2.3.1
+mysqlclient==2.2.4
 prometheus_client==0.20.0
 sqlparse==0.5.0
 tzdata==2024.1

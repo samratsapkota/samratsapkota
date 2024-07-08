@@ -1,0 +1,30 @@
+version: "3"
+
+services:
+    grafana:
+        image: grafana/grafana
+        container_name: grafana
+        user: "0:0"
+        ports:
+            - 3000:3000
+        volumes:
+            - ./data/grafana:/var/lib/grafana
+
+    prom:
+        image: prom/prometheus
+        container_name: prometheus
+        ports:
+            - 9090:9090
+        volumes:
+            - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+    node-exporter:
+        image: prom/node-exporter:latest
+        container_name: node-exporter
+        ports:
+            - 9100:9100
+    django:
+        image: bandhu8/hello:latest
+        container_name: django
+        ports:
+            - 8000:8000
+            - 50000:50000 
