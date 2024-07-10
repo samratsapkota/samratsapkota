@@ -22,17 +22,6 @@ services:
         container_name: node-exporter
         ports:
             - 9100:9100
-    django:
-        image: bandhu8/hello:latest
-        container_name: django
-        ports:
-            - 8000:8000
-            - 50000:50000
-        env_file:
-            - .env
-        depends_on:
-            - db:
-              condition: service_healthy     
     db:
       image: mysql:5.7
       container_name: project_name_mariadb
@@ -50,3 +39,17 @@ services:
         test: ["CMD", "mysql", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}", "-e", "SELECT 1"]
         timeout: 20s
         retries: 10        
+    django:
+        image: bandhu8/hello:latest
+        container_name: django
+        ports:
+            - 8000:8000
+            - 50000:50000
+        env_file:
+            - .env
+        depends_on:
+            - db:
+              condition: service_healthy     
+
+volumes:
+  - data:                
