@@ -1,3 +1,4 @@
+
 version: "3"
 
 services:
@@ -36,9 +37,9 @@ services:
       ports:
         - "3306:3306"
       healthcheck:
-        test: ["CMD", "mysql", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}", "-e", "SELECT 1"]
+        test: ["CMD", "mysql", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}", "-e", "SELECT 1"] 
         timeout: 20s
-        retries: 10        
+        retries: 10
     django:
         image: bandhu8/hello:latest
         container_name: django
@@ -48,8 +49,7 @@ services:
         env_file:
             - .env
         depends_on:
-            - db:
-              condition: service_healthy     
-
+             db:
+               condition: service_healthy
 volumes:
-  - data:                
+   data:  
