@@ -8,15 +8,16 @@ services:
     ports:
       - 3000:3000
     volumes:
-      - ./data/grafana:/var/lib/grafana
+      - ./provisioning/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./provisioning/grafana/dashboards:/etc/grafana/provisioning/dashboards
 
-  prom:
+  prometheus:
     image: prom/prometheus
     container_name: prometheus
     ports:
       - 9090:9090
     volumes:
-      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./provisioning/prometheus:/etc/prometheus
 
   node-exporter:
     image: prom/node-exporter:latest
