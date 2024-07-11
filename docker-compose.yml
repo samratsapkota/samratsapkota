@@ -7,28 +7,28 @@ services:
         container_name: grafana
         user: "0:0"
         ports:
-            - 3000:3000
+          - 3000:3000
         volumes:
-            - ./data/grafana:/var/lib/grafana
+          - ./data/grafana:/var/lib/grafana
 
     prom:
         image: prom/prometheus
         container_name: prometheus
         ports:
-            - 9090:9090
+          - 9090:9090
         volumes:
-            - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+          - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
     node-exporter:
         image: prom/node-exporter:latest
         container_name: node-exporter
         ports:
-            - 9100:9100
+          - 9100:9100
     db:
       image: mysql:8.0.11
       container_name: project_name_mariadb
       restart: always
       volumes:
-        - data:/var/lib/mysql
+        - ./data/mysql:/var/lib/mysql
       environment:
         MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
         MYSQL_DATABASE: ${DB_NAME}
@@ -44,16 +44,16 @@ services:
         image: bandhu8/hello:latest
         container_name: django
         command: >
-             sh -c "sleep 10 &&
-             python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+            sh -c "sleep 10 &&
+            python manage.py migrate &&
+            python manage.py runserver 0.0.0.0:8000"
         ports:
-            - 8000:8000
-            - 50000:50000
+          - 8000:8000
+          - 50000:50000
         env_file:
-            - .env
+          - .env
         depends_on:
-            - db:
+        - db
                
 volumes:
    data:  
