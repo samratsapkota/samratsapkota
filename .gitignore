@@ -1,4 +1,5 @@
 .vagrant/
 log.txt
 .env
+data/
 
