@@ -53,7 +53,24 @@ services:
     env_file:
       - .env
     depends_on:
-      - db   # Ensure db service is started before django
+      - db 
+  backup:
+    image: alpine
+    container_name: mysql_backup
+    volumes:
+      - ./mysql-backups:/backups
+    environment:
+      MYSQL_CONTAINER: project_name_mariadb
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    entrypoint: >
+      sh -c "
+      echo '0 0 * * * root /usr/bin/mysqldump -h ${DB_HOST} -u ${DB_USER} -p${DB_PASSWORD} ${DB_NAME} > /backups/db_backup_$(date +\%F).sql' >> /etc/crontabs/root &&
+      crond -f -d 8
+      "
+    depends_on:
+      - db     # Ensure db service is started before django
 
 volumes:
   data:
