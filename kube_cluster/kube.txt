@@ -1,0 +1,64 @@
+Prerequisites:
+Before we start, ensure that you have the following installed on your system:
+1. VirtualBox is a general-purpose full virtualizer for x86 hardware that will host our virtual machines (VMs)
+2. Vagrant is a tool for building and managing virtual machine environments, which we'll use to setup our VMs
+
+Vagrantfile:
+This Vagrantfile will create one master node and two worker nodes, each with 2 GB of RAM and 2 CPU cores. 
+It uses the ubuntu/bionic64 Vagrant box and VirtualBox as the provider.
+
+Bootstrap.sh:
+This script installs Docker and Kubernetes, disables swap memory, and configures containerd for Kubernetes 
+on an Ubuntu system:
+
+1. Install Docker: Downloads and runs the Docker installation script.
+2. Install Kubernetes: Sets up the Kubernetes repository and installs specific versions of kubeadm, kubelet, and kubectl.
+3. Disable swap: Disables swap memory to comply with Kubernetes requirements.
+4. Enable CRI plugin in containerd: Ensures the CRI plugin is enabled in containerd for Kubernetes compatibility.
+5. Completion: Prints "Done" after completing all steps.
+
+Now, to run the cluster firstly vms must be created.So, open terminal on the folder which has both this file and type:
+
+    vagrant up
+
+One master node and 2 worker node with differnt ip is setup accordingly.
+Go on the master node by:
+
+    vagrant ssh master
+
+Then, initialize the master node
+
+    sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=192.168.56.45
+
+Note: Make sure your are using correct ip of master node.To know what is your ip type: 
+
+    ip a 
+
+kubeadm command provide us with token withis should be copied and past to the other worker nodes.
+It will look something like this:
+
+    sudo kubeadm join 192.168.56.10:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>
+
+
+Verify the Cluster
+Finally, verify that all nodes have joined the cluster. SSH back into the master node:
+
+    vagrant ssh master
+
+Then you should copy connection settings to your home folder:
+
+    sudo cp /etc/kubernetes/admin.conf $HOME/
+    sudo chown $(id -u):$(id -g) $HOME/admin.conf
+    export KUBECONFIG=$HOME/admin.conf
+
+Need, need add the export command to your shell profile (such as ~/.bashrc or ~/.bash_profile), so it gets set every time you open a new terminal session.
+
+    echo "export KUBECONFIG=$HOME/admin.conf" | tee -a ~/.bashrc
+
+Then, source your profile or open a new terminal session:
+
+    source ~/.bashrc  # or ~/.bash_profile, ~/.zshrc, etc.
+
+Then run the following command to list all nodes in the cluster:
+
+    kubectl get nodes
