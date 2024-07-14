@@ -1,0 +1,264 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fnil\fcharset0 Calibri;}{\f1\fnil\fcharset2 Symbol;}}
+{\colortbl ;\red0\green0\blue255;}
+{\*\generator Riched20 10.0.22621}\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\f0\fs22\lang9 To create a Git repository with the branches main, staging, production, and development, you can follow these steps:\par
+
+\pard\sa200\sl240\slmult1 1.  Initialize a Git Repository\par
+
+\pard\sa200\sl276\slmult1 First, you need to create a new directory for your project and initialize a Git repository inside it.\par
+mkdir my-project\par
+cd my-project\par
+git init\par
+2.  Create Branches\par
+Once the repository is initialized, you can create branches for main, staging, production, and development.\par
+\par
+
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 Create and Switch to main Branch\par
+
+\pard\sa200\sl276\slmult1\tab git checkout -b main\par
+
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 Create and Switch to staging Branch\par
+
+\pard\sa200\sl276\slmult1\tab git checkout -b staging\par
+
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 Create and Switch to production Branch\par
+
+\pard\sa200\sl276\slmult1\tab git checkout -b production\par
+
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 Create and Switch to development Branch\par
+
+\pard\sa200\sl276\slmult1\tab git checkout -b development\par
+3. Verify Branches\par
+To verify that the branches have been created, you can list all branches:\par
+\tab git branch\par
+4. Start Working in Your Repository\par
+Now that your repository has been set up with the required branches, you can start working on your project files. Make sure to commit changes to the appropriate branches based on your workflow.\par
+We have a simple django todo project with mysql. Then for continous deployment, we used Jenkins. To setup a jenkins server we created a vm using vagrant.\par
+
+\pard\li630\sa200\sl276\slmult1  # -- mode: ruby --\par
+# vi: set ft=ruby :\par
+\par
+VAGRANTFILE_API_VERSION = "2"\par
+\par
+$script = <<ENDSCRIPT\par
+  sudo sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/*.repo\par
+  sudo sed -i s/^#.*baseurl=http/baseurl=http/g /etc/yum.repos.d/*.repo\par
+  sudo sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/*.repo\par
+  sudo yum -y update\par
+  sudo yum install -y epel-release\par
+  sudo yum install -y net-tools\par
+  sudo yum install -y wget\par
+  sudo wget -O /etc/yum.repos.d/jenkins.repo {{\field{\*\fldinst{HYPERLINK http://pkg.jenkins-ci.org/redhat/jenkins.repo }}{\fldrslt{http://pkg.jenkins-ci.org/redhat/jenkins.repo\ul0\cf0}}}}\f0\fs22\par
+  sudo rpm --import {{\field{\*\fldinst{HYPERLINK http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key }}{\fldrslt{http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key\ul0\cf0}}}}\f0\fs22\par
+  sudo yum install java-11-openjdk\par
+  echo 'export JAVA_HOME=/usr/lib/jvm/jre-11-openjdk' | sudo tee -a /etc/profile\par
+  echo 'export JRE_HOME=/usr/lib/jvm/jre-11' | sudo tee -a /etc/profile\par
+  source /etc/profile\par
+  echo $JAVA_HOME\par
+  echo $JRE_HOME\par
+  cd ~ \par
+  sudo wget -O /etc/yum.repos.d/jenkins.repo {{\field{\*\fldinst{HYPERLINK https://pkg.jenkins.io/redhat-stable/jenkins.repo }}{\fldrslt{https://pkg.jenkins.io/redhat-stable/jenkins.repo\ul0\cf0}}}}\f0\fs22\par
+  sudo rpm --import {{\field{\*\fldinst{HYPERLINK https://pkg.jenkins.io/redhat-stable/jenkins.io.key }}{\fldrslt{https://pkg.jenkins.io/redhat-stable/jenkins.io.key\ul0\cf0}}}}\f0\fs22\par
+  sudo sed -i '$ a gpgkey=http://pkg.jenkins.io/redhat-stable/jenkins.io.key' /etc/yum.repos.d/jenkins.repo\par
+  sudo yum install jenkins\par
+  sudo yum clean all\par
+  \par
+  sudo systemctl start jenkins.service\par
+  sudo systemctl enable jenkins.service\par
+  sudo yum install git\par
+  sudo yum install -y yum-utils\par
+  sudo yum-config-manager --add-repo {{\field{\*\fldinst{HYPERLINK https://download.docker.com/linux/centos/docker-ce.repo }}{\fldrslt{https://download.docker.com/linux/centos/docker-ce.repo\ul0\cf0}}}}\f0\fs22\par
+  sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin\par
+  sudo systemctl start docker\par
+  sudo usermod -aG docker vagrant\par
+ENDSCRIPT\par
+\par
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|\par
+  config.vm.box = "centos/7"\par
+  config.vm.network "private_network", ip: "192.168.93.12",name:"VirtualBox Host-Only Ethernet Adapter #4"\par
+  config.vm.network "forwarded_port", guest: 8080, host: 8888\par
+  config.vm.provision "shell", inline: $script\par
+end\par
+
+\pard\sa200\sl276\slmult1 After configuring jenkins, we created a jenkins pipeline to build the docker image and push it to the docker hub Repository. To create a docker image we used tha Dockerfile as below:\par
+
+\pard\li630\sa200\sl276\slmult1 FROM python:3.11\par
+WORKDIR /app\par
+COPY requirements.txt .\par
+RUN pip install --no-cache-dir -r requirements.txt python-dotenv\par
+COPY . .\par
+EXPOSE 8000\par
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]\par
+
+\pard\sa200\sl276\slmult1 Note: To get the requirement of your django project, we use pip freeze>requirement.txt.\par
+The jenkins pipeline is as follow:\par
+
+\pard\li630\sa200\sl276\slmult1 pipeline \{\par
+    agent any\par
+\par
+    environment \{\par
+        dockerImage=''\par
+        registry = 'bandhu8/hello:latest'\par
+        repoUrl = '{{\field{\*\fldinst{HYPERLINK https://github.com/samratsapkota/samratsapkota.git }}{\fldrslt{https://github.com/samratsapkota/samratsapkota.git\ul0\cf0}}}}\f0\fs22 '\par
+        branchName = 'staging'\par
+        registryCredential = 'tododockerhub'\par
+    \}\par
+\par
+    stages \{\par
+        stage('Clone Repository') \{\par
+            steps \{\par
+                git branch: "$\{branchName\}", url: "$\{repoUrl\}"\par
+            \}\par
+        \}\par
+\par
+        stage('Build Docker Image') \{\par
+            steps \{\par
+                script \{\par
+                    dockerImage = docker.build("$\{registry\}")\par
+                \}\par
+            \}\par
+        \}\par
+\par
+        stage('Push Docker Image') \{\par
+            steps \{\par
+                script \{\par
+                        docker.withRegistry('https://registry.hub.docker.com', registryCredential) \{\par
+                        dockerImage.push()\par
+                    \}\par
+                \}\par
+        \}\par
+    \}\par
+    \}\par
+\}\par
+
+\pard\sa200\sl276\slmult1 When ever there is change in the staging branch on git, this pipeline get triggered and a image is uploaded in dockerhub.\par
+Now, the image can be containerized and used in docker compose to get deployed in staging environment. Firstly, the sample.env file should be copied to as .env and necessary changes can be made accourdingly to change the db configurations.\par
+the docker-compose.yml file is as shown:\par
+
+\pard\li450\sa200\sl276\slmult1 version: "3"\par
+\par
+services:\par
+  grafana:\par
+    image: grafana/grafana\par
+    container_name: grafana\par
+    user: "0:0"\par
+    ports:\par
+      - 3000:3000\par
+    volumes:\par
+      - ./provisioning/grafana/datasources:/etc/grafana/provisioning/datasources\par
+      - ./provisioning/grafana/dashboards:/etc/grafana/provisioning/dashboards\par
+\par
+  prometheus:\par
+    image: prom/prometheus\par
+    container_name: prometheus\par
+    ports:\par
+      - 9090:9090\par
+    volumes:\par
+      - ./provisioning/prometheus:/etc/prometheus\par
+\par
+  node-exporter:\par
+    image: prom/node-exporter:latest\par
+    container_name: node-exporter\par
+    ports:\par
+      - 9100:9100\par
+\par
+  db:\par
+    image: mysql:8.0.11\par
+    container_name: project_name_mariadb\par
+    restart: always\par
+    volumes:\par
+      - .data/mysql:/var/lib/mysql\par
+    environment:\par
+      MYSQL_ROOT_PASSWORD: $\{DB_ROOT_PASSWORD\}\par
+      MYSQL_DATABASE: $\{DB_NAME\}\par
+      MYSQL_USER: $\{DB_USER\}\par
+      MYSQL_PASSWORD: $\{DB_PASSWORD\}\par
+    ports:\par
+      - "3306:3306"\par
+    healthcheck:\par
+      test: ["CMD", "mysql", "-h", "$\{DB_HOST\}", "-u", "root", "-p$\{DB_ROOT_PASSWORD\}", "-e", "SELECT 1"]\par
+      timeout: 20s\par
+      retries: 10\par
+\par
+  django:\par
+    image: bandhu8/hello:latest\par
+    container_name: django\par
+    command: sh -c "sleep 10 && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"\par
+    ports:\par
+      - 8000:8000\par
+      - 50000:50000\par
+    env_file:\par
+      - .env\par
+    depends_on:\par
+      - db \par
+  backup:\par
+    image: alpine\par
+    container_name: mysql_backup\par
+    volumes:\par
+      - ./mysql-backups:/backups\par
+    environment:\par
+      MYSQL_CONTAINER: project_name_mariadb\par
+      MYSQL_USER: $\{DB_USER\}\par
+      MYSQL_PASSWORD: $\{DB_PASSWORD\}\par
+      MYSQL_DATABASE: $\{DB_NAME\}\par
+    entrypoint: >\par
+      sh -c "\par
+      echo '0 0 * * * root /usr/bin/mysqldump -h $\{DB_HOST\} -u $\{DB_USER\} -p$\{DB_PASSWORD\} $\{DB_NAME\} > /backups/db_backup_$(date +\\%F).sql' >> /etc/crontabs/root &&\par
+      crond -f -d 8\par
+      "\par
+    depends_on:\par
+      - db     # Ensure db service is started before django\par
+\par
+volumes:\par
+  data:\par
+
+\pard\sa200\sl276\slmult1 It created container for grafana,prometheus,node exporter,mysql, django and backup container.\par
+1. Grafana\par
+\tab Image: grafana/grafana\par
+\tab Container Name: grafana\par
+\tab Purpose: Grafana is an open-source platform for monitoring and observability, providing \tab visualization and analytics of time-series data.\par
+\tab Ports: Exposes port 3000 for web interface.\par
+\tab Volumes: Mounts directories for provisioning Grafana datasources and dashboards.\par
+2. Prometheus\par
+\tab Image: prom/prometheus\par
+\tab Container Name: prometheus\par
+\tab Purpose: Prometheus is an open-source monitoring and alerting toolkit focused on time-\tab series data.\par
+\tab Ports: Exposes port 9090 for the Prometheus server UI and API.\par
+\tab Volumes: Mounts a directory for Prometheus configuration.\par
+3. Node Exporter\par
+\tab Image: prom/node-exporter:latest\par
+\tab Container Name: node-exporter\par
+\tab Purpose: Node Exporter is a Prometheus exporter for machine metrics, exposing metrics \tab about the host machine's health and performance.\par
+\tab Ports: Exposes port 9100 to serve metrics.\par
+4. MySQL (db)\par
+\tab Image: mysql:8.0.11\par
+\tab Container Name: project_name_mariadb\par
+\tab Purpose: MySQL is a widely-used open-source relational database management system \tab (RDBMS).\par
+\tab Ports: Exposes port 3306 for MySQL connections.\par
+\tab Volumes: Persists MySQL data to .data/mysql on the host filesystem.\par
+\tab Environment Variables: Configures MySQL root password, database name, user, and \tab password.\par
+\tab Healthcheck: Checks MySQL server health by executing a SQL query.\par
+5. Django\par
+\tab Image: bandhu8/hello:latest\par
+\tab Container Name: django\par
+\tab Purpose: Django is a high-level Python web framework that allows rapid development and \tab clean, pragmatic design.\par
+\tab Ports: Exposes port 8000 for the Django application and port 50000 for potential \tab debugging.\par
+\tab Environment Variables: Loads environment variables from .env file for configuration.\par
+\tab Depends On: Ensures the MySQL database (db) service is running before starting Django.\par
+\tab Command: Runs migrations and starts the Django development server after a delay.\par
+6. Backup\par
+\tab Image: alpine\par
+\tab Container Name: mysql_backup\par
+\tab Purpose: Performs backups of the MySQL database using cron jobs within an Alpine Linux \tab container.\par
+\tab Volumes: Mounts a directory for storing MySQL backups (./mysql-backups on the host \tab filesystem).\par
+\tab Environment Variables: Specifies MySQL connection details for authentication and backup.\par
+\tab Entrypoint: Configures a cron job (crond) within the container to run MySQL backups daily \tab at midnight (0 0 * * *).\par
+Volumes\par
+\tab Name: data\par
+\tab Purpose: This volume is defined but not used explicitly in the services section. Volumes are \tab typically used for persisting data between container restarts or for sharing data between \tab containers.\par
+Each service in your docker-compose.yml file serves a specific purpose within your application stack, such as monitoring (Grafana, Prometheus), database management (MySQL), application hosting (Django), and backup automation. The docker-compose.yml file orchestrates these services, ensuring they are started and connected in the correct order and with the necessary configurations.\par
+\par
+\par
+\par
+}
+ 

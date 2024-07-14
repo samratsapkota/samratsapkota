@@ -58,7 +58,7 @@ services:
     image: alpine
     container_name: mysql_backup
     volumes:
-      - ./mysql-backups:/backups
+      - .data/mysql-backups:/backups
     environment:
       MYSQL_CONTAINER: project_name_mariadb
       MYSQL_USER: ${DB_USER}
